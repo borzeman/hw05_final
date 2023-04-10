@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% load cache %}
+{% block title %}
+  Последние обновления на сайте
+{% endblock %}
+{% block content %}
+  {% cache 1 index_page page_obj %}
+    <h1>Последние обновления на сайте</h1>
+    {% include 'posts/includes/switcher.html' with index=True %}
+    {% for post in page_obj %}
+      {% include 'posts/includes/post.html' with group_link=True %}
+    {% endfor %}
+  {% if not forloop.last %}<hr>{% endif %}
+  {% include 'includes/paginator.html' %}
+  {% endcache %}
+{% endblock %}
