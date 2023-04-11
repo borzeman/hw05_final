@@ -125,7 +125,7 @@ class PostCreateFormTests(TestCase):
 
         self.assertEqual(len([id_set_modify]), POSTNUM_1)
         id_post = list(set(id_set_modify) - set(id_set_original))[0]
-        post = Post.objects.select_related('group', 'author').get(pk=id_post)
+        post = Post.objects.get(pk=id_post)
         self.assertEqual(self.post_text_form['text'], post.text)
         self.assertEqual(self.post_text_form['group'], post.group.pk)
         self.assertEqual(f'posts/{self.post_text_form["image"]}', post.image)
@@ -176,18 +176,18 @@ class PostCreateFormTests(TestCase):
     def test_auth_user_add_comment(self):
         """Корректировка комментария авторизованным юзером"""
         form = {'text': 'hola'}
-        id_set_original = set(Comment.objects.values_list('id', flat=True))
+        old_comments_count = Comment.objects.count()
         self.authorized_client.post(
             reverse('posts:add_comment',
                     kwargs={'post_id': self.create_post.id}),
-            data=form)
-        id_set_modify = set(Comment.objects.values_list('id', flat=True))
-        self.assertEqual(len([id_set_modify]), POSTNUM_1)
-        id_comment = list(set(id_set_modify) - set(id_set_original))[0]
-        comment = Comment.objects.select_related('author').get(pk=id_comment)
-        self.assertEqual(comment.post, self.create_post)
-        self.assertEqual(comment.author, self.create_post.author)
-        self.assertEqual(comment.text, form['text'])
+            data=form
+        )
+        new_comments_count = Comment.objects.count()
+        self.assertEqual(new_comments_count, old_comments_count + 1)
+        latest_comment = Comment.objects.latest('pk')
+        self.assertEqual(latest_comment.post, self.create_post)
+        self.assertEqual(latest_comment.author, self.create_post.author)
+        self.assertEqual(latest_comment.text, form['text'])
 
     def test_unauth_user_edit(self):
         """Корректировка комментария неавторизованным юзером"""

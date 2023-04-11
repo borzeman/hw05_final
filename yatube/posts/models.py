@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.db.models import UniqueConstraint
 
 User = get_user_model()
 
@@ -82,14 +83,12 @@ class Comment(models.Model):
 
 
 class Follow(models.Model):
-
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='follower',
         verbose_name='Подписчик'
     )
-
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -100,3 +99,7 @@ class Follow(models.Model):
     class Meta:
         verbose_name = 'Follow',
         verbose_name_plural = 'Following'
+        # добавляем ограничение на уникальность комбинации полей user и author
+        constraints = [
+            UniqueConstraint(fields=['user', 'author'], name='unique_follow')
+        ]

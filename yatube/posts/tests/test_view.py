@@ -4,7 +4,7 @@ from django.urls import reverse
 from django import forms
 import time
 
-from posts.models import Post, Group
+from posts.models import Post, Group, Follow
 from django.core.cache import cache
 
 
@@ -72,7 +72,6 @@ class PostPagesTests(TestCase):
             author=cls.author,
             group=cls.group,
         )
-        cls.client = Client()
 
     def setUp(self):
         self.user = User.objects.create_user(username='Non_author')
@@ -190,3 +189,32 @@ class PostPagesTests(TestCase):
         cache.clear()
         end_cache = self.client.get(reverse('posts:index')).content
         self.assertNotEqual(cache_data, end_cache)
+
+    def test_follow_auth_user(self):
+        """Проверяем возможность подписки на автора"""
+        follow = Follow.objects.filter(
+            user=self.other_user, author=self.author)
+        self.assertFalse(follow)
+        start_follower_num = Follow.objects.count()
+        self.other_user_client.get(
+            reverse('posts:profile_follow',
+                    kwargs={'username': self.author.username})
+        )
+        end_follower_num = Follow.objects.count()
+        self.assertEqual(end_follower_num, start_follower_num + POSTNUM_1)
+        follow = Follow.objects.filter(
+            user=self.other_user, author=self.author)
+        self.assertTrue(follow)
+
+    def test_unfollow_auth_user(self):
+        """Проверяем возможность отписки от автора"""
+        Follow.objects.create(user=self.other_user, author=self.author)
+        follow = Follow.objects.filter(
+            user=self.other_user, author=self.author)
+        self.assertTrue(follow)
+        self.other_user_client.get(
+            reverse('posts:profile_unfollow',
+                    kwargs={'username': self.other_user.username}))
+        follow = Follow.objects.filter(
+            user=self.other_user, author=self.other_user)
+        self.assertFalse(follow)

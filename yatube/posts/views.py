@@ -1,11 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from .models import Comment, Follow, Post, Group, User
+from .models import Follow, Post, Group, User
 from .forms import PostForm, CommentForm
 from .utils import get_page_paginator
-
-
-num_art = 10  # Количество выводимых статей
 
 
 def index(request):
@@ -28,19 +25,17 @@ def group_post(request, slug):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    post_list = author.posts.select_related('author').all()
+    post_list = author.posts.all()
     post_count = post_list.count()
-    following = False
-    if (request.user != author
-            and request.user.is_authenticated
-            and Follow.objects.filter(
-                user=request.user, author=author,).exists()):
-        following = True
+    follow = (request.user != author
+              and request.user.is_authenticated
+              and Follow.objects.filter(
+                  user=request.user, author=author).exists())
     context = {
         'author': author,
         'post_count': post_count,
         'page_obj': get_page_paginator(request, post_list),
-        'following': following
+        'following': follow
     }
     return render(request, 'posts/profile.html', context)
 
@@ -48,7 +43,7 @@ def profile(request, username):
 def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
 
-    comments = Comment.objects.select_related('author').filter(post=post)
+    comments = post.Comments.all()
     form = CommentForm()
     context = {
         'post': post,
@@ -118,8 +113,8 @@ def follow_index(request):
 
 @login_required
 def profile_follow(request, username):
-    if username != request.user.username:
-        author = get_object_or_404(User, username=username)
+    author = get_object_or_404(User, username=username)
+    if author.id != request.user.id:
         Follow.objects.get_or_create(user=request.user, author=author)
     return redirect('posts:profile', username=username)
 
