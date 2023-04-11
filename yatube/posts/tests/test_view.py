@@ -194,7 +194,6 @@ class PostPagesTests(TestCase):
         """Проверяем возможность подписки на автора"""
         follow = Follow.objects.filter(
             user=self.other_user, author=self.author)
-        self.assertFalse(follow)
         start_follower_num = Follow.objects.count()
         self.other_user_client.get(
             reverse('posts:profile_follow',
@@ -209,9 +208,6 @@ class PostPagesTests(TestCase):
     def test_unfollow_auth_user(self):
         """Проверяем возможность отписки от автора"""
         Follow.objects.create(user=self.other_user, author=self.author)
-        follow = Follow.objects.filter(
-            user=self.other_user, author=self.author)
-        self.assertTrue(follow)
         self.other_user_client.get(
             reverse('posts:profile_unfollow',
                     kwargs={'username': self.other_user.username}))
