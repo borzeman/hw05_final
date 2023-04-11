@@ -192,8 +192,6 @@ class PostPagesTests(TestCase):
 
     def test_follow_auth_user(self):
         """Проверяем возможность подписки на автора"""
-        follow = Follow.objects.filter(
-            user=self.other_user, author=self.author)
         start_follower_num = Follow.objects.count()
         self.other_user_client.get(
             reverse('posts:profile_follow',
